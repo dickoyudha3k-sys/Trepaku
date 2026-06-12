@@ -4042,62 +4042,35 @@ async function sendChat() {
       });
     });
 
-    // 2. NILAI BULANAN (TREN DALAM TAHUN)
-    lines.push('\n=== TREN BULANAN (NILAI IKPA PER BULAN) ===');
-    years.forEach(y => {
-      KPPN_IDS.forEach(k => {
-        const rows = IKPA_DATA.monthly.filter(r=>r.KDKPPN===k&&r.TAHUN===y).sort((a,b)=>a.PERIODE-b.PERIODE);
-        if (rows.length) {
-          const vals = rows.map(r=>`B${r.PERIODE}=${r.NILAI_AKHIR?.toFixed(1)}`).join(' ');
-          lines.push(`${y} KPPN ${k}(${KPPN_NAMES[k]}): ${vals}`);
-        }
-      });
-    });
-
-    // 3. DISTRIBUSI KATEGORI
+    // 2. DISTRIBUSI KATEGORI (ringkas)
     lines.push('\n=== DISTRIBUSI KATEGORI SATKER ===');
-    years.filter(y=>y<2026).forEach(y => {
+    [2023,2024,2025].forEach(y => {
       KPPN_IDS.forEach(k => {
-        const cats = ['Sangat Baik','Baik','Cukup','Kurang'];
-        const parts = cats.map(c => {
-          const r = IKPA_DATA.distribution.find(d=>d.TAHUN===y&&d.KDKPPN===k&&d.KATEGORI===c);
-          return `${c}=${r?r.COUNT:0}`;
-        }).join(' | ');
-        lines.push(`${y} KPPN ${k}(${KPPN_NAMES[k]}): ${parts}`);
+        const sb = IKPA_DATA.distribution.find(d=>d.TAHUN===y&&d.KDKPPN===k&&d.KATEGORI==='Sangat Baik');
+        const b  = IKPA_DATA.distribution.find(d=>d.TAHUN===y&&d.KDKPPN===k&&d.KATEGORI==='Baik');
+        const c  = IKPA_DATA.distribution.find(d=>d.TAHUN===y&&d.KDKPPN===k&&d.KATEGORI==='Cukup');
+        const ku = IKPA_DATA.distribution.find(d=>d.TAHUN===y&&d.KDKPPN===k&&d.KATEGORI==='Kurang');
+        lines.push(`${y} KPPN${k}: SB=${sb?.COUNT||0} B=${b?.COUNT||0} C=${c?.COUNT||0} K=${ku?.COUNT||0}`);
       });
     });
 
-    // 4. JUMLAH SATKER
-    lines.push('\n=== JUMLAH SATKER PER TAHUN ===');
-    years.forEach(y => {
-      KPPN_IDS.forEach(k => {
-        const r = IKPA_DATA.satker_count.find(d=>d.KDKPPN===k&&d.TAHUN===y);
-        if (r) lines.push(`${y} KPPN ${k}(${KPPN_NAMES[k]}): ${r.JUMLAH_SATKER} satker`);
-      });
+    // 3. JUMLAH SATKER
+    lines.push('\n=== JUMLAH SATKER ===');
+    [2024,2025,2026].forEach(y => {
+      const row = KPPN_IDS.map(k=>{const r=IKPA_DATA.satker_count.find(d=>d.KDKPPN===k&&d.TAHUN===y);return `KPPN${k}:${r?r.JUMLAH_SATKER:'-'}`;}).join(' ');
+      lines.push(`${y}: ${row}`);
     });
 
-    // 5. BEST & WORST SATKER
-    lines.push('\n=== SATKER TERBAIK & TERBURUK PER TAHUN ===');
-    IKPA_DATA.best_worst.forEach(bw => {
-      lines.push(`${bw.tahun} KPPN ${bw.kppn}(${KPPN_NAMES[bw.kppn]}):`);
-      lines.push(`  TERBAIK: ${bw.best.slice(0,3).map(s=>`${s.NMSATKER}(${s.NILAI_AKHIR?.toFixed(1)})`).join(', ')}`);
-      lines.push(`  TERBURUK: ${bw.worst.slice(0,3).map(s=>`${s.NMSATKER}(${s.NILAI_AKHIR?.toFixed(1)})`).join(', ')}`);
+    // 4. BEST & WORST SATKER (hanya 2024-2026, top 2 saja)
+    lines.push('\n=== SATKER TERBAIK & TERBURUK ===');
+    IKPA_DATA.best_worst.filter(bw=>bw.tahun>=2024).forEach(bw => {
+      lines.push(`${bw.tahun} KPPN${bw.kppn}: BEST=${bw.best.slice(0,2).map(s=>`${s.NMSATKER}(${s.NILAI_AKHIR?.toFixed(1)})`).join('|')} | WORST=${bw.worst.slice(0,2).map(s=>`${s.NMSATKER}(${s.NILAI_AKHIR?.toFixed(1)})`).join('|')}`);
     });
 
-    // 6. RATA-RATA KOMPONEN BULANAN (ringkasan)
-    lines.push('\n=== KOMPONEN RATA-RATA TAHUNAN PER KPPN ===');
-    IKPA_DATA.comp_avg.forEach(r => {
-      lines.push(`${r.TAHUN} KPPN ${r.KDKPPN}(${KPPN_NAMES[r.KDKPPN]}): RevDIPA=${r.NILAI_REV_DIPA?.toFixed(1)} Hal3=${r.NILAI_HAL3_DIPA?.toFixed(1)} Real=${r.NILAI_REALISASI?.toFixed(1)} Kontrak=${r.NILAI_KONTRAKTUAL?.toFixed(1)} Tagihan=${r.NILAI_TAGIHAN?.toFixed(1)} UP/TUP=${r.NILAI_UP_TUP?.toFixed(1)} DispSPM=${r.NILAI_DISPENSASI_SPM?.toFixed(1)} CapOut=${r.NILAI_CAPUT?.toFixed(1)}`);
-    });
-
-    // 7. HEATMAP RATA-RATA BULANAN (lintas tahun)
-    lines.push('\n=== RATA-RATA IKPA PER BULAN (LINTAS TAHUN, PER KPPN) ===');
-    KPPN_IDS.forEach(k => {
-      const rows = IKPA_DATA.heatmap.filter(r=>r.KDKPPN===k).sort((a,b)=>a.PERIODE-b.PERIODE);
-      if (rows.length) {
-        const vals = rows.map(r=>`B${r.PERIODE}=${r.NILAI_AKHIR?.toFixed(1)}`).join(' ');
-        lines.push(`KPPN ${k}(${KPPN_NAMES[k]}): ${vals}`);
-      }
+    // 5. KOMPONEN RATA-RATA (hanya 2024-2026)
+    lines.push('\n=== KOMPONEN RATA-RATA PER KPPN ===');
+    IKPA_DATA.comp_avg.filter(r=>r.TAHUN>=2024).forEach(r => {
+      lines.push(`${r.TAHUN} KPPN${r.KDKPPN}: H3=${r.NILAI_HAL3_DIPA?.toFixed(1)} Real=${r.NILAI_REALISASI?.toFixed(1)} Kt=${r.NILAI_KONTRAKTUAL?.toFixed(1)} Tg=${r.NILAI_TAGIHAN?.toFixed(1)} UP=${r.NILAI_UP_TUP?.toFixed(1)} CapOut=${r.NILAI_CAPUT?.toFixed(1)}`);
     });
 
     return lines.join('\n');
@@ -4174,53 +4147,8 @@ DATA DASHBOARD (2022–2026)
 ═══════════════════════════════════════════════════
 ${dataContext}
 
-═══════════════════════════════════════════════════
-KEMAMPUAN ANALISIS LUAR DASHBOARD
-═══════════════════════════════════════════════════
-Selain data dashboard, kamu juga mampu menjawab pertanyaan umum seputar:
-
-1. REGULASI & KEBIJAKAN
-   • PER-5/PB/2024: seluruh mekanisme penilaian IKPA terbaru
-   • PMK 62/PMK.02/2023: perencanaan anggaran dan revisi DIPA
-   • PMK 210/2022: ketentuan penyelesaian tagihan 17 hari kerja
-   • Inpres 1/2024: percepatan pengadaan barang/jasa
-   • Perpres 95/2018: SPBE dan monitoring kinerja
-   • SE DJPb No.SE-6/PB/2023: monitoring realisasi anggaran
-   • PMK 97/PMK.05/2021: pengelolaan UP/TUP
-   • Pedoman Kartu Kredit Pemerintah (KKP)
-
-2. SISTEM & APLIKASI DJPb
-   • SAKTI (Sistem Aplikasi Keuangan Tingkat Instansi)
-   • SPAN (Sistem Perbendaharaan dan Anggaran Negara)
-   • SAS (Sistem Aplikasi Satker)
-   • e-Monitoring DJPb untuk capaian output
-   • RKAKL/DIPA online
-   • Cara menghitung IKPA secara manual
-   • Cara membaca dan menginterpretasikan nilai komponen
-
-3. BEST PRACTICE & STRATEGI PENINGKATAN IKPA
-   • Strategi front-loading belanja di Q1
-   • Cara meningkatkan akurasi RPD (Hal 3 DIPA)
-   • Manajemen kontrak yang patuh 17-hari
-   • Optimasi pengelolaan UP dengan KKP
-   • Cara menurunkan frekuensi revisi DIPA
-   • Monitoring capaian output secara proaktif
-   • Benchmarking antar KPPN dan nasional
-
-4. KONSEP PERBENDAHARAAN UMUM
-   • Siklus anggaran: perencanaan → penetapan → pelaksanaan → pelaporan
-   • Perbedaan DIPA, POK, RPD
-   • Mekanisme pencairan: SPP → SPM → SP2D
-   • Jenis belanja: modal, barang, pegawai, bantuan sosial
-   • Pengadaan: e-procurement, LPSE, kontrak payung
-   • Pertanggungjawaban: LPJ, LKPP, BUN vs satker
-   • Perbedaan KPPN sebagai mitra satker vs KPPN sebagai BUN
-
-5. ANALISIS DAN PREDIKSI
-   • Proyeksi nilai IKPA berdasarkan tren regresi
-   • Identifikasi satker atau KPPN yang berisiko
-   • Rekomendasi prioritas intervensi
-   • Perbandingan dengan standar nasional DJPb
+KEMAMPUAN LAIN
+Kamu juga bisa menjawab pertanyaan di luar data dashboard: regulasi IKPA (PER-5/PB/2024, PMK 62/2023, PMK 210/2022), sistem DJPb (SAKTI, SPAN, SAS, e-Monitoring), strategi peningkatan IKPA, konsep perbendaharaan umum, dan analisis prediktif.
 
 ═══════════════════════════════════════════════════
 INSTRUKSI PERILAKU
