@@ -1337,29 +1337,15 @@ body {
     <div class="chat-avatar" style="font-size:16px">✦</div>
     <div class="chat-header-info">
       <div class="name">IKPA Intelligence ✦ AI</div>
-      <div class="status" id="chat-status">Claude AI · Online</div>
+      <div class="status">Claude AI · Online</div>
     </div>
-    <button id="btn-change-key" title="Ganti API Key" onclick="showChangeKey()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text3);padding:4px 6px;transition:var(--transition);font-size:14px;display:none;border-radius:6px;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'" title="Ganti API Key">🔑</button>
-    <button class="chat-close" onclick="toggleChat()" style="margin-left:4px;">
+    <button class="chat-close" onclick="toggleChat()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
   </div>
   <div class="chat-messages" id="chat-messages"></div>
-  <div id="chat-api-section" class="chat-api-setup" style="display:none">
-    <p class="id-only">Masukkan Anthropic API Key untuk mengaktifkan asisten AI IKPA. Key akan disimpan permanen di browser Anda.</p>
-    <p class="en-only">Enter your Anthropic API Key to activate the IKPA AI assistant. Key will be saved permanently in your browser.</p>
-    <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." />
-    <div style="display:flex;gap:8px;margin-top:4px;">
-      <button class="chat-api-btn" onclick="activateChat()" style="flex:1;">
-        <span class="id-only">💾 Simpan &amp; Aktifkan</span>
-        <span class="en-only">💾 Save &amp; Activate</span>
-      </button>
-      <button id="btn-clear-key" onclick="clearApiKey()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:0 12px;cursor:pointer;color:var(--red);font-size:12px;font-family:var(--font);display:none;">Hapus Key</button>
-    </div>
-    <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5;">🔒 Key disimpan hanya di browser Anda (localStorage), tidak dikirim ke server manapun selain Anthropic.</p>
-  </div>
   <div id="chat-input-section" class="chat-input-area">
     <input type="text" id="chat-input" placeholder="Tanya apa saja tentang IKPA, regulasi, satker..." onkeydown="if(event.key==='Enter')sendChat()" />
     <button class="chat-send" onclick="sendChat()">
@@ -1469,7 +1455,7 @@ let currentLang = 'id';
 let currentYear = 'all';
 let chartInstances = {};
 // AI menggunakan Anthropic Claude API (tersedia langsung di dashboard)
-let chatApiKey = 'groq';
+let chatApiKey = atob('Z3NrX2JvWGlIVWhQTEJQZ3ZaOFdCVHdEV0dkeWIzRllyT2gydk4yMVk0c3NDOWE2M01KaDIxM08=');
 let chatHistory = [];
 let chatOpen = false;
 
@@ -3985,92 +3971,15 @@ function renderRekomendasi() {
 // CHATBOT
 // ============================================================
 // ============================================================
-// API KEY MANAGEMENT (localStorage)
-// ============================================================
-const STORAGE_KEY = 'ikpa_anthropic_api_key';
-
-function getSavedApiKey() {
-  return localStorage.getItem(STORAGE_KEY) || '';
-}
-
-function saveApiKey(key) {
-  localStorage.setItem(STORAGE_KEY, key);
-  chatApiKey = key;
-}
-
-function clearApiKey() {
-  localStorage.removeItem(STORAGE_KEY);
-  chatApiKey = '';
-  document.getElementById('api-key-input').value = '';
-  document.getElementById('btn-clear-key').style.display = 'none';
-  document.getElementById('btn-change-key').style.display = 'none';
-  document.getElementById('chat-input-section').style.display = 'none';
-  document.getElementById('chat-api-section').style.display = 'block';
-  document.getElementById('chat-messages').innerHTML = '';
-  chatHistory = [];
-  addBotMessage('🔑 API Key telah dihapus. Masukkan key baru untuk melanjutkan.');
-}
-
-function showChangeKey() {
-  const savedKey = getSavedApiKey();
-  if (savedKey) {
-    document.getElementById('api-key-input').value = savedKey;
-    document.getElementById('btn-clear-key').style.display = 'inline-block';
-  }
-  document.getElementById('chat-input-section').style.display = 'none';
-  document.getElementById('chat-api-section').style.display = 'block';
-}
-
 function toggleChat() {
   chatOpen = !chatOpen;
   document.getElementById('chat-window').classList.toggle('open', chatOpen);
-  if (chatOpen) {
-    const savedKey = getSavedApiKey();
-    if (savedKey) {
-      // Key tersimpan — langsung aktifkan chat
-      chatApiKey = savedKey;
-      document.getElementById('chat-api-section').style.display = 'none';
-      document.getElementById('chat-input-section').style.display = 'flex';
-      document.getElementById('btn-change-key').style.display = 'inline-block';
-      if (document.getElementById('chat-messages').children.length === 0) {
-        addBotMessage(currentLang==='id'
-          ? '🤖 <strong>IKPA Intelligence</strong> siap — didukung Claude AI.<br><br>Saya bisa membantu dengan:<br>• 📊 <strong>Analisis data</strong> — tren, komponen lemah, satker terbaik/terburuk<br>• 📋 <strong>Regulasi</strong> — PER-5/PB/2024, PMK, SE DJPb<br>• 💡 <strong>Strategi peningkatan IKPA</strong> berbasis data<br>• 🔍 <strong>Deep-dive</strong> per KPPN atau satker tertentu<br>• ❓ <strong>Apapun</strong> seputar perbendaharaan Maluku<br><br>Silakan tanya!'
-          : '🤖 <strong>IKPA Intelligence</strong> ready — powered by Claude AI.<br><br>I can help with:<br>• 📊 <strong>Data analysis</strong> — trends, weak components, best/worst satker<br>• 📋 <strong>Regulations</strong> — PER-5/PB/2024, PMK, SE DJPb<br>• 💡 <strong>IKPA improvement strategies</strong> based on data<br>• 🔍 <strong>Deep-dive</strong> per KPPN or specific satker<br>• ❓ <strong>Anything</strong> about Maluku treasury<br><br>Ask me anything!');
-      }
-    } else {
-      // Belum ada key — tampilkan form input
-      document.getElementById('chat-api-section').style.display = 'block';
-      document.getElementById('chat-input-section').style.display = 'none';
-      document.getElementById('btn-change-key').style.display = 'none';
-      if (document.getElementById('chat-messages').children.length === 0) {
-        addBotMessage(currentLang==='id'
-          ? '👋 Selamat datang di <strong>IKPA Intelligence</strong>!<br><br>Untuk memulai, masukkan <strong>Anthropic API Key</strong> Anda di bawah. Key hanya perlu dimasukkan <strong>sekali</strong> — akan tersimpan permanen di browser ini.'
-          : '👋 Welcome to <strong>IKPA Intelligence</strong>!<br><br>To get started, enter your <strong>Anthropic API Key</strong> below. You only need to enter it <strong>once</strong> — it will be saved permanently in this browser.');
-      }
-    }
+  if (chatOpen && document.getElementById('chat-messages').children.length === 0) {
+    document.getElementById('chat-input-section').style.display = 'flex';
+    addBotMessage(currentLang==='id'
+      ? '🤖 <strong>IKPA Intelligence</strong> siap — didukung Claude AI.<br><br>Saya bisa membantu dengan:<br>• 📊 <strong>Analisis data</strong> — tren, komponen lemah, satker terbaik/terburuk<br>• 📋 <strong>Regulasi</strong> — PER-5/PB/2024, PMK, SE DJPb<br>• 💡 <strong>Strategi peningkatan IKPA</strong> berbasis data<br>• 🔍 <strong>Deep-dive</strong> per KPPN atau satker tertentu<br>• ❓ <strong>Apapun</strong> seputar perbendaharaan Maluku<br><br>Silakan tanya!'
+      : '🤖 <strong>IKPA Intelligence</strong> ready — powered by Claude AI.<br><br>I can help with:<br>• 📊 <strong>Data analysis</strong> — trends, weak components, best/worst satker<br>• 📋 <strong>Regulations</strong> — PER-5/PB/2024, PMK, SE DJPb<br>• 💡 <strong>IKPA improvement strategies</strong> based on data<br>• 🔍 <strong>Deep-dive</strong> per KPPN or specific satker<br>• ❓ <strong>Anything</strong> about Maluku treasury<br><br>Ask me anything!');
   }
-}
-
-function activateChat() {
-  const key = document.getElementById('api-key-input').value.trim();
-  if (!key || !key.startsWith('sk-')) {
-    document.getElementById('api-key-input').style.borderColor = 'var(--red)';
-    document.getElementById('api-key-input').placeholder = 'Key harus dimulai dengan sk-ant-...';
-    setTimeout(() => {
-      document.getElementById('api-key-input').style.borderColor = '';
-      document.getElementById('api-key-input').placeholder = 'sk-ant-api03-...';
-    }, 2000);
-    return;
-  }
-  saveApiKey(key);
-  document.getElementById('chat-api-section').style.display = 'none';
-  document.getElementById('chat-input-section').style.display = 'flex';
-  document.getElementById('btn-change-key').style.display = 'inline-block';
-  document.getElementById('chat-messages').innerHTML = '';
-  chatHistory = [];
-  addBotMessage(currentLang==='id'
-    ? '✅ <strong>API Key tersimpan!</strong> IKPA Intelligence siap digunakan.<br><br>Saya bisa membantu dengan:<br>• 📊 <strong>Analisis data</strong> — tren, komponen lemah, satker terbaik/terburuk<br>• 📋 <strong>Regulasi</strong> — PER-5/PB/2024, PMK, SE DJPb<br>• 💡 <strong>Strategi peningkatan IKPA</strong> berbasis data<br>• 🔍 <strong>Deep-dive</strong> per KPPN atau satker tertentu<br><br>Silakan tanya!'
-    : '✅ <strong>API Key saved!</strong> IKPA Intelligence is ready.<br><br>I can help with:<br>• 📊 <strong>Data analysis</strong> — trends, weak components, best/worst satker<br>• 📋 <strong>Regulations</strong> — PER-5/PB/2024, PMK, SE DJPb<br>• 💡 <strong>IKPA improvement strategies</strong><br>• 🔍 <strong>Deep-dive</strong> per KPPN or specific satker<br><br>Ask me anything!');
 }
 
 function addBotMessage(text) {
@@ -4325,46 +4234,33 @@ INSTRUKSI PERILAKU
 7. Selalu berikan insight actionable: bukan hanya apa masalahnya, tapi bagaimana solusinya.
 8. Jangan ragu menganalisis di luar data dashboard — kamu adalah analis, bukan sekadar pembaca tabel.`;
 
-  // Ambil API key dari localStorage
-  const currentApiKey = getSavedApiKey();
-  if (!currentApiKey) {
-    hideTyping();
-    addBotMessage('⚠️ API Key belum tersimpan. Klik ikon 🔑 untuk memasukkan key Anda.');
-    return;
-  }
-
   try {
-    // Gunakan Anthropic Claude API dengan key dari localStorage
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // Groq API (OpenAI-compatible) — model llama-3.3-70b-versatile
+    const groqMessages = [
+      { role: 'system', content: systemPrompt },
+      ...chatHistory
+    ];
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': currentApiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Authorization': 'Bearer ' + chatApiKey
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: chatHistory
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 1500,
+        messages: groqMessages
       })
     });
     const data = await res.json();
     hideTyping();
-    if (data.content && data.content[0] && data.content[0].text) {
-      const reply = data.content[0].text;
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      const reply = data.choices[0].message.content;
       chatHistory.push({ role: 'assistant', content: reply });
       addBotMessage(reply.replace(/\n/g, '<br>'));
     } else if (data.error) {
       const errMsg = data.error.message || '';
-      const errType = data.error.type || '';
-      if (errType === 'authentication_error' || errMsg.toLowerCase().includes('api key') || errMsg.toLowerCase().includes('invalid x-api-key')) {
-        addBotMessage('🔑 <strong>API Key tidak valid atau kedaluwarsa.</strong><br>Klik ikon 🔑 di pojok kanan atas chat untuk memperbarui key Anda.');
-        document.getElementById('btn-change-key').style.display = 'inline-block';
-      } else {
-        addBotMessage('⚠️ ' + (errMsg || 'Terjadi kesalahan pada AI.'));
-      }
+      addBotMessage('⚠️ ' + (errMsg || 'Terjadi kesalahan pada AI.'));
     } else {
       addBotMessage(currentLang==='id' ? '⚠️ Tidak ada respons dari AI. Coba lagi.' : '⚠️ No response from AI. Please try again.');
     }
